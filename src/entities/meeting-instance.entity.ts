@@ -30,7 +30,8 @@ export class MeetingInstance {
   endTime: Date;
 
   @Column({
-    type: 'text',
+    type: 'varchar',
+    length: 50,
     default: TranscriptStatus.NONE
   })
   transcriptStatus: TranscriptStatus;
