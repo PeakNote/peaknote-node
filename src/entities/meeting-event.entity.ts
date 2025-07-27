@@ -32,7 +32,8 @@ export class MeetingEvent {
 
   @Column({
     name: 'transcript_status',
-    type: 'text',
+    type: 'varchar',
+    length: 50,
     default: TranscriptStatus.NONE
   })
   transcriptStatus: TranscriptStatus;
