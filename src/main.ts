@@ -1,6 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { AppModule } from './app.minimal.module';
+import { AppModule } from './app.module';
+import { TeamsUserSyncService } from './services/teams-user-sync.service';
+import { SubscriptionService } from './services/subscription.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -20,7 +22,20 @@ async function bootstrap() {
   await app.listen(port);
   
   console.log(`✅ PeakNote backend is running on port ${port}`);
-  console.log(`🟡 正在为所有用户注册订阅...`);
+  console.log(`🟡 正在同步用户并注册订阅...`);
+  
+  // Sync users and create subscriptions
+  try {
+    const userSyncService = app.get(TeamsUserSyncService);
+    const subscriptionService = app.get(SubscriptionService);
+    
+    await userSyncService.syncUsers();
+    await subscriptionService.createSubscriptionsForAllUsers();
+    
+    console.log(`✅ 用户同步和订阅注册完成`);
+  } catch (error) {
+    console.error(`❌ 用户同步或订阅注册失败:`, error.message);
+  }
 }
 
 bootstrap();
