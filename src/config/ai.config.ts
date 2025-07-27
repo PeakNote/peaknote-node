@@ -18,10 +18,10 @@ export class AIConfig {
   }
 
   get maxTokens(): number {
-    return this.configService.get<number>('AI_MAX_TOKENS') || this.configService.get<number>('OPENAI_MAX_TOKENS') || 1000;
+    return parseInt(this.configService.get<string>('AI_MAX_TOKENS') || this.configService.get<string>('OPENAI_MAX_TOKENS') || '1000');
   }
 
   get temperature(): number {
-    return this.configService.get<number>('AI_TEMPERATURE') || this.configService.get<number>('OPENAI_TEMPERATURE') || 0.3;
+    return parseFloat(this.configService.get<string>('AI_TEMPERATURE') || this.configService.get<string>('OPENAI_TEMPERATURE') || '0.3');
   }
 }

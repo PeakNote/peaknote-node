@@ -156,18 +156,23 @@ export class TranscriptService {
       try {
         this.logger.log(`成功获取分布式锁，eventId=${eventId}`);
         
+        // Generate AI summary
+        this.logger.log(`🤖 正在为 eventId=${eventId} 生成 AI 摘要...`);
+        const summary = await this.meetingSummaryService.generateSummary(newContent);
+        this.logger.log(`✅ AI 摘要生成完成，eventId=${eventId}`);
+        
         // Delete cache first
         await this.cacheManager.del(`transcriptCache::${eventId}`);
         
-        // Update database
+        // Update database with AI summary
         await this.meetingTranscriptRepository
           .createQueryBuilder()
           .update()
-          .set({ contentText: newContent })
+          .set({ contentText: summary })
           .where('meetingEvent.eventId = :eventId', { eventId })
           .execute();
         
-        this.logger.log(`✅ 已更新数据库中的 transcript，eventId=${eventId}`);
+        this.logger.log(`✅ 已更新数据库中的 transcript (含 AI 摘要)，eventId=${eventId}`);
 
         // Delayed double delete
         setTimeout(async () => {
