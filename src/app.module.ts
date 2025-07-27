@@ -44,62 +44,62 @@ import {
       isGlobal: true,
       envFilePath: '.env',
     }),
-    // TypeOrmModule.forRootAsync({
-    //   useFactory: async () => {
-    //     const dbConfig = {
-    //       type: 'mysql' as const,
-    //       host: process.env.DB_HOST || 'localhost',
-    //       port: parseInt(process.env.DB_PORT) || 3306,
-    //       username: process.env.DB_USERNAME || 'root',
-    //       password: process.env.DB_PASSWORD || '',
-    //       database: process.env.DB_DATABASE || 'peaknote',
-    //       entities: [
-    //         MeetingEvent,
-    //         MeetingTranscript,
-    //         MeetingInstance,
-    //         TeamsUser,
-    //         GraphUserSubscription,
-    //         MeetingUrlAccess,
-    //       ],
-    //       synchronize: process.env.NODE_ENV !== 'production',
-    //       logging: process.env.NODE_ENV === 'development',
-    //       autoLoadEntities: true,
-    //     };
+    TypeOrmModule.forRootAsync({
+      useFactory: async () => {
+        const dbConfig = {
+          type: 'mysql' as const,
+          host: process.env.DB_HOST || 'localhost',
+          port: parseInt(process.env.DB_PORT) || 3306,
+          username: process.env.DB_USERNAME || 'root',
+          password: process.env.DB_PASSWORD || '',
+          database: process.env.DB_DATABASE || 'peaknote',
+          entities: [
+            MeetingEvent,
+            MeetingTranscript,
+            MeetingInstance,
+            TeamsUser,
+            GraphUserSubscription,
+            MeetingUrlAccess,
+          ],
+          synchronize: process.env.NODE_ENV !== 'production',
+          logging: process.env.NODE_ENV === 'development',
+          autoLoadEntities: true,
+        };
 
-    //     // Test database connection
-    //     try {
-    //       const mysql = require('mysql2/promise');
-    //       const connection = await mysql.createConnection({
-    //         host: dbConfig.host,
-    //         port: dbConfig.port,
-    //         user: dbConfig.username,
-    //         password: dbConfig.password,
-    //         connectTimeout: 2000,
-    //       });
-    //       await connection.end();
-    //       console.log('✅ MySQL connection successful');
-    //       return dbConfig;
-    //     } catch (error) {
-    //       console.warn('⚠️ MySQL not available, using SQLite fallback:', error.message);
-    //       return {
-    //         type: 'sqlite' as const,
-    //         database: ':memory:',
-    //         entities: dbConfig.entities,
-    //         synchronize: true,
-    //         logging: false,
-    //         autoLoadEntities: true,
-    //       };
-    //     }
-    //   },
-    // }),
-    // TypeOrmModule.forFeature([
-    //   MeetingEvent,
-    //   MeetingTranscript,
-    //   MeetingInstance,
-    //   TeamsUser,
-    //   GraphUserSubscription,
-    //   MeetingUrlAccess,
-    // ]),
+        // Test database connection
+        try {
+          const mysql = require('mysql2/promise');
+          const connection = await mysql.createConnection({
+            host: dbConfig.host,
+            port: dbConfig.port,
+            user: dbConfig.username,
+            password: dbConfig.password,
+            connectTimeout: 2000,
+          });
+          await connection.end();
+          console.log('✅ MySQL connection successful');
+          return dbConfig;
+        } catch (error) {
+          console.warn('⚠️ MySQL not available, using SQLite fallback:', error.message);
+          return {
+            type: 'sqlite' as const,
+            database: ':memory:',
+            entities: dbConfig.entities,
+            synchronize: true,
+            logging: false,
+            autoLoadEntities: true,
+          };
+        }
+      },
+    }),
+    TypeOrmModule.forFeature([
+      MeetingEvent,
+      MeetingTranscript,
+      MeetingInstance,
+      TeamsUser,
+      GraphUserSubscription,
+      MeetingUrlAccess,
+    ]),
     CacheModule.registerAsync({
       isGlobal: true,
       useFactory: async () => {
@@ -130,11 +130,11 @@ import {
     AzureConfig,
     WebhookConfig,
     AIConfig,
-    // MeetingEventRepository,
-    // MeetingTranscriptRepository,
-    // GraphUserSubscriptionRepository,
-    // UserRepository,
-    // MeetingInstanceRepository,
+    MeetingEventRepository,
+    MeetingTranscriptRepository,
+    GraphUserSubscriptionRepository,
+    UserRepository,
+    MeetingInstanceRepository,
   ],
 })
 export class AppModule {}

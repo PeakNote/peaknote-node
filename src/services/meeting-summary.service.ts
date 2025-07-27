@@ -1,14 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
+import { AIConfig } from '@/config/ai.config';
 
 @Injectable()
 export class MeetingSummaryService {
   private readonly logger = new Logger(MeetingSummaryService.name);
   private readonly openai: OpenAI;
 
-  constructor() {
+  constructor(private readonly aiConfig: AIConfig) {
     this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: this.aiConfig.apiKey,
+      baseURL: this.aiConfig.baseURL,
     });
   }
 
@@ -17,7 +19,7 @@ export class MeetingSummaryService {
       this.logger.log('🤖 正在生成会议摘要...');
 
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
+        model: this.aiConfig.model,
         messages: [
           {
             role: 'system',
@@ -28,8 +30,8 @@ export class MeetingSummaryService {
             content: `请为以下会议转录内容生成摘要：\n\n${transcriptContent}`,
           },
         ],
-        max_tokens: 1000,
-        temperature: 0.3,
+        max_tokens: this.aiConfig.maxTokens,
+        temperature: this.aiConfig.temperature,
       });
 
       const summary = response.choices[0]?.message?.content || '无法生成摘要';
