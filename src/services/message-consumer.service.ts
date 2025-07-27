@@ -23,6 +23,7 @@ export class MessageConsumer {
       // Ensure queues exist
       await this.channel.assertQueue('event-queue', { durable: true });
       await this.channel.assertQueue('transcript-queue', { durable: true });
+      await this.channel.assertQueue('call-record-queue', { durable: true });
       
       // Start consuming messages
       this.startConsuming();
@@ -36,38 +37,64 @@ export class MessageConsumer {
   private async startConsuming(): Promise<void> {
     if (!this.channel) return;
 
-    // Consume event messages
+    // Consume event messages with prefetch limit
+    await this.channel.prefetch(1); // Only process one message at a time
+    
     await this.channel.consume('event-queue', async (msg) => {
       if (msg) {
         try {
           const content = msg.content.toString();
           const payload = JSON.parse(content);
           
-          this.logger.log('📥 处理事件消息');
+          this.logger.log(`📥 处理事件消息: ${content.substring(0, 100)}...`);
           await this.processEventMessage(payload);
           
           this.channel.ack(msg);
+          this.logger.log('✅ 消息处理成功，已确认');
         } catch (error) {
           this.logger.error(`❌ 处理事件消息失败: ${error.message}`);
+          this.logger.error(`❌ 错误详情: ${error.stack}`);
           this.channel.nack(msg, false, false); // Reject and don't requeue
         }
       }
     });
 
-    // Consume transcript messages
+    // Also consume transcript messages
     await this.channel.consume('transcript-queue', async (msg) => {
       if (msg) {
         try {
           const content = msg.content.toString();
           const payload = JSON.parse(content);
           
-          this.logger.log('📥 处理转录消息');
+          this.logger.log(`🎙️ 处理转录消息: ${content.substring(0, 100)}...`);
           await this.processTranscriptMessage(payload);
           
           this.channel.ack(msg);
+          this.logger.log('✅ 转录消息处理成功，已确认');
         } catch (error) {
           this.logger.error(`❌ 处理转录消息失败: ${error.message}`);
-          this.channel.nack(msg, false, false);
+          this.logger.error(`❌ 错误详情: ${error.stack}`);
+          this.channel.nack(msg, false, false); // Reject and don't requeue
+        }
+      }
+    });
+
+    // Also consume call record messages
+    await this.channel.consume('call-record-queue', async (msg) => {
+      if (msg) {
+        try {
+          const content = msg.content.toString();
+          const payload = JSON.parse(content);
+          
+          this.logger.log(`📞 处理通话记录消息: ${content.substring(0, 100)}...`);
+          await this.processCallRecordMessage(payload);
+          
+          this.channel.ack(msg);
+          this.logger.log('✅ 通话记录消息处理成功，已确认');
+        } catch (error) {
+          this.logger.error(`❌ 处理通话记录消息失败: ${error.message}`);
+          this.logger.error(`❌ 错误详情: ${error.stack}`);
+          this.channel.nack(msg, false, false); // Reject and don't requeue
         }
       }
     });
@@ -129,6 +156,37 @@ export class MessageConsumer {
       }
     } catch (error) {
       this.logger.error(`❌ 处理转录消息失败: ${error.message}`);
+      throw error;
+    }
+  }
+
+  private async processCallRecordMessage(payload: any): Promise<void> {
+    try {
+      this.logger.log('📞 处理通话记录消息');
+      
+      if (!payload.value || !Array.isArray(payload.value)) {
+        this.logger.warn('⚠️ 无效的通话记录负载格式');
+        return;
+      }
+
+      for (const notification of payload.value) {
+        const { resource, changeType } = notification;
+        
+        this.logger.log(`📞 通话记录事件: ${changeType} - ${resource}`);
+        
+        // Extract call record ID from resource
+        // Resource format: /communications/callRecords/{callId}
+        const resourceMatch = resource.match(/\/communications\/callRecords\/([^\/]+)/);
+        if (resourceMatch) {
+          const [, callId] = resourceMatch;
+          
+          this.logger.log(`📞 处理通话记录: callId=${callId}`);
+          // TODO: Implement call record processing logic
+          // This could include fetching call details, participants, duration etc.
+        }
+      }
+    } catch (error) {
+      this.logger.error(`❌ 处理通话记录消息失败: ${error.message}`);
       throw error;
     }
   }

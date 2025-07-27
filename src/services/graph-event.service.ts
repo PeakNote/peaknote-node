@@ -18,13 +18,25 @@ export class GraphEventService {
 
   async processEvent(userId: string, eventId: string, isRecurring: boolean): Promise<void> {
     try {
-      const event = await this.graphService.getUserEvent(userId, eventId);
+      this.logger.log(`🔍 开始处理事件: userId=${userId}, eventId=${eventId}, isRecurring=${isRecurring}`);
+      
+      try {
+        const event = await this.graphService.getUserEvent(userId, eventId);
+        this.logger.log(`📅 获取事件成功: ${event?.subject || 'Unknown'}`);
 
-      if (isRecurring) {
-        await this.addSeriesInstances(userId, eventId);
-      } else {
-        const meetingEvent = await this.convertEvent(event, userId);
-        await this.meetingEventRepository.save(meetingEvent);
+        if (isRecurring) {
+          await this.addSeriesInstances(userId, eventId);
+        } else {
+          const meetingEvent = await this.convertEvent(event, userId);
+          this.logger.log(`💾 准备保存会议事件到数据库: ${meetingEvent.subject}`);
+          
+          const savedEvent = await this.meetingEventRepository.save(meetingEvent);
+          this.logger.log(`✅ 会议事件已保存到数据库: ID=${savedEvent.eventId}, status=${savedEvent.transcriptStatus}`);
+        }
+      } catch (graphError) {
+        this.logger.error(`❌ Graph API调用失败: ${graphError.message}`);
+        this.logger.error(`❌ 详细错误: ${JSON.stringify(graphError)}`);
+        throw graphError;
       }
     } catch (error) {
       this.logger.error(`❌ 处理事件失败: ${error.message}`);

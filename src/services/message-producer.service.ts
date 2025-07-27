@@ -22,6 +22,7 @@ export class MessageProducer {
       // Declare queues
       await this.channel.assertQueue('event-queue', { durable: true });
       await this.channel.assertQueue('transcript-queue', { durable: true });
+      await this.channel.assertQueue('call-record-queue', { durable: true });
       
       this.logger.log('✅ RabbitMQ 连接成功');
     } catch (error) {
@@ -56,6 +57,21 @@ export class MessageProducer {
       this.logger.log('📤 Transcript 消息已发送到队列');
     } catch (error) {
       this.logger.error(`❌ Transcript 消息发送失败: ${error.message}`);
+    }
+  }
+
+  async sendCallRecordMessage(message: any): Promise<void> {
+    if (!this.channel) {
+      this.logger.log('📤 CallRecord 消息待发送 (RabbitMQ 暂未配置)');
+      return;
+    }
+
+    try {
+      const messageString = typeof message === 'string' ? message : JSON.stringify(message);
+      await this.channel.sendToQueue('call-record-queue', Buffer.from(messageString), { persistent: true });
+      this.logger.log('📤 CallRecord 消息已发送到队列');
+    } catch (error) {
+      this.logger.error(`❌ CallRecord 消息发送失败: ${error.message}`);
     }
   }
 }

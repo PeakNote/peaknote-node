@@ -161,6 +161,32 @@ export class GraphService {
     }
   }
 
+  async createCallRecordSubscription(
+    notificationUrl: string,
+    clientState: string,
+    expireTime: Date,
+  ): Promise<any> {
+    try {
+      const subscription = {
+        changeType: 'created,updated',
+        notificationUrl,
+        resource: '/communications/onlineMeetings',
+        expirationDateTime: expireTime.toISOString(),
+        clientState,
+      };
+
+      const result = await this.webhookGraphClient
+        .api('/subscriptions')
+        .post(subscription);
+
+      this.logger.log(`✅ 创建通话记录订阅成功: ${result.id}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`❌ 创建通话记录订阅失败: ${error.message}`);
+      throw error;
+    }
+  }
+
   async createTranscriptSubscription(
     meetingId: string,
     notificationUrl: string,

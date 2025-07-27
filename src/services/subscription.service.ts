@@ -26,8 +26,37 @@ export class SubscriptionService {
       for (const user of users) {
         await this.createEventSubscription(user.oid);
       }
+
+      // Note: Call record and transcript subscriptions are created per-meeting
+      // when calendar events are processed, not globally
+      
     } catch (error) {
       this.logger.error(`❌ 创建订阅失败: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async createCallRecordSubscription(): Promise<void> {
+    try {
+      const notificationUrl = `${this.configService.get('WEBHOOK_BASE_URL')}/webhook/call-record`;
+      const expireTime = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
+      const clientState = this.configService.get('WEBHOOK_CLIENT_STATE') || 'PeakNote-CallRecord';
+
+      const created = await this.graphService.createCallRecordSubscription(
+        notificationUrl,
+        clientState,
+        expireTime,
+      );
+
+      this.logger.log(`✅ 成功创建通话记录订阅: ${created.id}`);
+
+      // Store in database
+      const graphUserSubscription = new GraphUserSubscription();
+      graphUserSubscription.id = created.id;
+      graphUserSubscription.expirationDateTime = expireTime;
+      await this.graphUserSubscriptionRepository.save(graphUserSubscription);
+    } catch (error) {
+      this.logger.error(`❌ 创建通话记录订阅失败: ${error.message}`);
       throw error;
     }
   }

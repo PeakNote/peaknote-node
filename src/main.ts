@@ -31,6 +31,8 @@ async function bootstrap() {
     
     await userSyncService.syncUsers();
     await subscriptionService.createSubscriptionsForAllUsers();
+    // TODO: Fix call record subscription - current implementation has wrong resource path
+    // await subscriptionService.createCallRecordSubscription();
     
     console.log(`✅ 用户同步和订阅注册完成`);
   } catch (error) {
